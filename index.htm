@@ -1,0 +1,80 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+
+	<head>				
+		<script src="/static/jquery-1.2.6.min.js" type="text/javascript"> </script>
+		<script src="/static/bbcode.js" type="text/javascript"> </script>
+		<link href="/static/code.css" rel="stylesheet" type="text/css"></link>
+	</head>
+	
+	<body>
+	
+	<h1>Postmarkup test server</h1>
+	<p>
+	This is a quick and dirty test for <a href="http://code.google.com/p/postmarkup/">Postmarkup</a>, a <a href="http://en.wikipedia.org/wiki/BBCode">bbcode</a> rendering engine for Python.
+	</p>
+	<p>
+	Example tags: [b][i][u][s][color][size][link][img][list][code][center][quote]
+	</p>
+	
+	<div style=" padding:2px;">
+	
+	
+	<div id="bbcode_input" style="float:left;display:inline;width:49.5%;background-color:#eef;border:1px solid #bbb;">
+	
+	<div style="width:99%;padding:4px;">Enter BBcode here:</div>
+	<div>		
+		<form style="border:no-border";>	
+			<textarea id="bbcode_textarea" style="width:99%;height:600px;">
+Postmarkup is easily customizable, existing tags can be disabled and new ones added.
+
+[size 32]Some sample bbcode[/size]
+[list]
+[*] Thread-safe
+[*] Handles overlapping tags
+e.g. [b]Bold [i]Bold and Italic[/b] Italic[/i]
+[*]Link annotation (can be disabled)
+e.g. [link http://www.becontrary.com]Best debating site on the net[/link]
+[*] Syntax Highlighting code tag.
+e.g. 
+[code python]
+class SimpleTag(TagBase):
+    
+    """A tag that can be rendered with a simple substitution. """
+    
+    def __init__(self, name, html_name):
+        """ html_name -- the html tag to substitute."""
+        TagBase.__init__(self, name, inline=True)
+        self.html_name = html_name
+            
+    def render_open(self, parser, node_index):
+        return u"<%s>"%self.html_name
+    
+    def render_close(self, parser, node_index):
+        return u"</%s>"%self.html_name
+[/code][/list]
+Postmarkup [i]should[/i] produce sensible markup with any input. Let me know if it doesn't.
+
+[img]http://www.willmcgugan.com/email.gif[/img]
+			</textarea>		
+		</form>
+	</div>
+	
+	</div>	
+	
+	<div id="bbcode_output" style="float:right;display:inline;width:49%;">
+	<div style="width:99%;padding:4px;">Rendered BBCode</div>			
+		<div id="bbcode" style="height:600px;padding:4px;border:1px solid #aaf;background-color:#fff;overflow:auto;">
+			&nbsp;
+		</div>	
+	</div>	
+	
+	</div>
+	<div style="clear:both;"> &nbsp; </div>
+
+	<a href="http://www.willmcgugan.com">http://www.willmcgugan.com</a>
+
+	</body>
+
+</html>
