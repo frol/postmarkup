@@ -1151,7 +1151,6 @@ class PostMarkup(object):
 
         supported_tags = self.get_supported_tags()
         
-        print 'FOR'
         # Pass 1
         for tag_type, tag_token, start_pos, end_pos in self.tokenize(post_markup):
 
@@ -1262,7 +1261,6 @@ class PostMarkup(object):
                     if not tag.inline:
                         remove_next_newline = True
         
-        print "ENDFOR"
         if tag_stack:
             redo_break_stack()
             while tag_stack:
