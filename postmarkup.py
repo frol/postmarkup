@@ -245,7 +245,7 @@ class LinkTag(TagBase):
             return u""
 
         if self.domain:
-            return u'<a href="%s">' % PostMarkup.standard_replace_no_break(self.url)
+            return u'<a href="%s" rel="nofollow">' % PostMarkup.standard_replace_no_break(self.url)
         else:
             return u""
 
