@@ -208,7 +208,6 @@ class LinkTag(TagBase):
             url = _unescape(url)
 
         self.domain = ""
-
         if ':' not in url:
             url = 'http://' + url
 
@@ -242,12 +241,14 @@ class LinkTag(TagBase):
         self.domain = domain
 
         if not self.url:
-            return u""
+            return u''
 
         if self.domain:
             return u'<a href="%s" rel="nofollow">' % PostMarkup.standard_replace_no_break(self.url)
         else:
-            return u""
+            if self.url.startswith('http://'): 
+                self.url = self.url[7:]
+            return u'<a href="%s">' % PostMarkup.standard_replace_no_break(self.url)
 
 
     def render_close(self, parser, node_index):
@@ -261,7 +262,7 @@ class LinkTag(TagBase):
         if self.domain:
             return u'</a>'+self.annotate_link(self.domain)
         else:
-            return u''
+            return u'</a>'
 
     def annotate_link(self, domain=None):
 
