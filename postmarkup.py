@@ -208,7 +208,6 @@ class LinkTag(TagBase):
             url = _unescape(url)
 
         self.domain = ""
-
         if ':' not in url:
             url = 'http://' + url
 
@@ -247,6 +246,8 @@ class LinkTag(TagBase):
         if self.domain:
             return u'<a href="%s" rel="nofollow">' % PostMarkup.standard_replace_no_break(self.url)
         else:
+            if self.url.startswith('http://'): 
+                self.url = self.url[7:]
             return u'<a href="%s">' % PostMarkup.standard_replace_no_break(self.url)
 
 
