@@ -18,7 +18,8 @@ __all__ = ["annotate_link",
            "ListItemTag",
            "SizeTag",
            "ColorTag",
-           "CenterTag",           
+           "CenterTag",
+           "RightTag",
            "SectionTag",
            "DefaultTag",
            "create",
@@ -539,6 +540,15 @@ class CenterTag(TagBase):
         return u'</div>'
 
 
+class RightTag(TagBase):
+
+    def render_open(self, parser, node_index, **kwargs):
+        return u'<div style="text-align:right;">'
+
+    def render_close(self, parser, node_index):
+        return u'</div>'
+
+
 class SectionTag(TagBase):
 
     """A specialised tag that stores its contents in a dictionary. Can be
@@ -632,6 +642,7 @@ def create(include=None,
     add_tag(SizeTag, u"size")
     add_tag(ColorTag, u"color")
     add_tag(CenterTag, u"center")
+    add_tag(RightTag, u"right")
 
     if use_pygments:
         assert pygments_available, "Install Pygments (http://pygments.org/) or call create with use_pygments=False"
@@ -803,8 +814,8 @@ class PostMarkup(object):
         TOKEN_TAG, TOKEN_PTAG, TOKEN_TEXT = range(3)
 
         post_find = post.find
-        while True:                        
-            brace_pos = find_first(post, pos, re_tag_on_line)            
+        while True:
+            brace_pos = post_find(u'[', pos)
             if brace_pos == -1:
                 if pos < len(post):
                     yield TOKEN_TEXT, post[pos:], pos, len(post)
@@ -931,7 +942,8 @@ class PostMarkup(object):
         return sorted(self.tag_factory.tags.keys())                
 
     # Matches simple blank tags containing only whitespace
-    _re_blank_tags = re.compile(r"\<(\w+?)\>\s*\</\1\>")
+    _re_blank_tags = re.compile(r"\<(\w+?)\>\</\1\>")
+    _re_blank_with_spaces_tags = re.compile(r"\<(\w+?)\>\s+\</\1\>")
 
     @classmethod
     def cleanup_html(cls, html):
@@ -947,6 +959,7 @@ class PostMarkup(object):
         while original_html != html:
             original_html = html
             html = cls._re_blank_tags.sub(u"", html)
+            html = cls._re_blank_with_spaces_tags.sub(u"<\\1> </\\1>", html)
         html = _re_break_groups.sub(u"\n", html)
         return html
 
