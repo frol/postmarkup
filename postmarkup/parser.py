@@ -549,6 +549,38 @@ class RightTag(TagBase):
         return u'</div>'
 
 
+class ParagraphTag(TagBase):
+
+    def __init__(self, name, **kwargs):
+        TagBase.__init__(self, name)
+
+    def render_open(self, parser, node_index, **kwargs):
+
+        tag_data = parser.tag_data
+        level = tag_data.setdefault('ParagraphTag.level', 0)
+
+        ret = []
+        if level > 0:
+            ret.append(u'</p>')
+            tag_data['ParagraphTag.level'] -= 1
+
+        ret.append(u'<p>')
+        tag_data['ParagraphTag.level'] += 1
+        return u''.join(ret)
+
+    def render_close(self, parser, node_index):
+
+        tag_data = parser.tag_data
+        level = tag_data.setdefault('ParagraphTag.level', 0)
+
+        if not level:
+            return u''
+
+        tag_data['ParagraphTag.level'] -= 1
+
+        return u'</p>'
+
+
 class SectionTag(TagBase):
 
     """A specialised tag that stores its contents in a dictionary. Can be
@@ -572,6 +604,7 @@ class SectionTag(TagBase):
         sections.setdefault(self.section_name, []).append(contents)
 
         return u''
+
 
 class DefaultTag(TagBase):
     def __init__(self, name, **kwargs):
@@ -649,6 +682,8 @@ def create(include=None,
         add_tag(PygmentsCodeTag, u'code', **kwargs)
     else:
         add_tag(CodeTag, u'code', **kwargs)    
+
+    add_tag(ParagraphTag, u"p")
 
     return postmarkup
         
