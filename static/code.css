@@ -1,4 +1,4 @@
-.code { background: #f8f8f8; }
+.code { background: #f8f8f8; font-size:14px;}
 .code .c { color: #008800; font-style: italic } /* Comment */
 .code .err { border: 1px solid #FF0000 } /* Error */
 .code .k { color: #AA22FF; font-weight: bold } /* Keyword */

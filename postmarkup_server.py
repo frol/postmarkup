@@ -1,29 +1,37 @@
-import cherrypy
-import postmarkup
-import os
+"""This is a WSGI server that runs a very simple application to test Postmarkup
 
-class Root(object):
+You can find it on http://postmarkup.willmcgugan.com
 
-    def index(self):
-        return open("index.htm").read()
-    index.exposed = True
+"""
 
-    def getbbcode(self, bbcode=""):
-        html = postmarkup.render_bbcode(bbcode, clean=True)
-        return html
-    getbbcode.exposed = True
+from postmarkup import render_bbcode
 
+from os.path import basename, dirname, join
+try:
+    from fs.osfs import OSFS
+except ImportError:
+    print("Get PyFilesystem from http://code.google.com/p/pyfilesystem/")
+    raise
+import mimetypes
 
-if __name__ == '__main__':
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    # Set up site-wide config first so we get a log if errors occur.
-    cherrypy.config.update({'environment': 'production',
-                            'log.error_file': 'site.log',
-                            'log.screen': True})
-
-    conf = {'/': {'tools.staticdir.root':current_dir},
-            '/static': {'tools.staticdir.on': True,
-                     'tools.staticdir.dir': os.path.join(current_dir, 'static')},}
-
-
-    cherrypy.quickstart(Root(), '/', config=conf)
+def application(environ, start_response):
+    fs = OSFS(join(dirname(__file__), "static"))
+    path = environ["PATH_INFO"]      
+    if path in ("", "/"):        
+        path = "index.html"
+    if path == "/getbbcode":
+        bbcode = unicode(environ["wsgi.input"].read(), 'utf-8')
+        html = render_bbcode(bbcode, clean=True, paragraphs=True, render_unknown_tags=True)
+        start_response("200 OK", [("Content-type", "text/html; charset=utf-8")])
+        return [html.encode("utf-8")]
+    mime_type, _encoding = mimetypes.guess_type(basename(path))
+    if not fs.isfile(path):
+        start_response("404 NOT FOUND", [])
+        return ["Nobody here but us chickens: %s" % path]
+    start_response("200 OK", [("Content-type", mime_type)])    
+    return [fs.getcontents(path)]
+    
+        
+if __name__ == "__main__":
+    from paste import httpserver
+    httpserver.serve(application)
