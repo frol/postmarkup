@@ -208,9 +208,10 @@ class LinkTag(TagBase):
 
     _re_uri = re.compile(r"^(?:(?:(?P<scheme>https?|ftp)\://)?(?P<domain>(?:\[?(?:\d{1,3}\.){3}\d{1,3}\]?)|(?:(?:[-a-zA-Z0-9]+\.)+[a-zA-Z]{2,4}))(?P<port>\:\d+)?)?(?P<path>/[-a-zA-Z0-9._?,'+&amp;%$#=~\\/|]*)?$", re.UNICODE)
 
-    def __init__(self, name, annotate_links=True, **kwargs):
+    def __init__(self, name, annotate_links=True, local_links=False, **kwargs):
         super(LinkTag, self).__init__(name, inline=True)
         self.annotate_links = annotate_links
+        self.local_links = local_links
 
     def render_open(self, parser, node_index):
 
@@ -240,6 +241,8 @@ class LinkTag(TagBase):
             self.domain = self.domain.lower()
             if not uri[u'scheme']:
                 url = u'http://' + url
+        elif not self.local_links:
+            return u''
 
         def percent_encode(s):
             safe_chars = self._safe_chars
@@ -256,11 +259,7 @@ class LinkTag(TagBase):
             self.is_link_empty = True
             return u""
 
-        if self.domain:
-            return u'<a href="%s">' % PostMarkup.standard_replace_no_break(self.url)
-        else:
-            return u'<a href="%s">' % PostMarkup.standard_replace_no_break(self.url)
-
+        return u'<a href="%s">' % PostMarkup.standard_replace_no_break(self.url)
 
     def render_close(self, parser, node_index):
 
@@ -275,8 +274,9 @@ class LinkTag(TagBase):
 
         if self.domain:
             return u'</a>' + self.annotate_link(self.domain)
-        else:
-            return u'</a>'
+        elif not self.local_links:
+            return u''
+        return u'</a>'
 
     def annotate_link(self, domain=None):
         if domain and self.annotate_links:
