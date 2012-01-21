@@ -10,7 +10,7 @@ http://postmarkup.willmcgugan.com/
 
 Differents from original project:
 
- * Right tag [right]text with right align[/right] (Issue #24)
+ * Right tag [right]text with right align\[/right] (Issue #24)
  * Fix cleaning tags with spaces (Issie #30)
  * Use \n instead of \n\n for paragraphs
  * Restore PharagraphTag [p]
