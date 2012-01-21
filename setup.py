@@ -4,7 +4,7 @@ Converts BBCode (http://en.wikipedia.org/wiki/BBCode) in to HTML and
 XHTML snippets. Always outputs valid XHTML, even from badly nested BBCode.
 """
 
-VERSION = "1.2.0"
+VERSION = "1.2.2"
 
 classifiers = """\
 Development Status :: 5 - Production/Stable
