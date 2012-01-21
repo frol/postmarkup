@@ -20,6 +20,7 @@ __all__ = ["annotate_link",
            "ColorTag",
            "CenterTag",
            "RightTag",
+           "ParagraphTag",
            "SectionTag",
            "DefaultTag",
            "create",
@@ -27,7 +28,8 @@ __all__ = ["annotate_link",
            "escape",
            "TagFactory",
            "PostMarkup",
-           "render_bbcode"]
+           "render_bbcode",
+           "pygments_available"]
 
 import re
 from urllib import quote_plus
@@ -57,7 +59,7 @@ _re_url = re.compile(r"((https?):(//)+[\w\d:#@%/;$()~_?\+-=\\\.&]*)", re.MULTILI
 _re_html=re.compile(r'<.*?>|\&.*?\;', re.UNICODE|re.DOTALL)
 _re_excerpt = re.compile(r'\[".*?\]+?.*?\[/".*?\]+?', re.DOTALL|re.UNICODE)
 _re_remove_markup = re.compile(r'\[.*?\]', re.DOTALL|re.UNICODE)
-_re_break_groups = re.compile('[\n]{2,}', re.DOTALL|re.UNICODE)
+_re_break_groups = re.compile('\n', re.DOTALL|re.UNICODE)
 
 
 def textilize(s):
@@ -202,9 +204,9 @@ class DivStyleTag(TagBase):
 
 class LinkTag(TagBase):
 
-    _safe_chars = frozenset(u'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_.-=/&?:%&#')
+    _safe_chars = frozenset(u'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_.-=/|&?:%&#')
 
-    _re_domain = re.compile(r"//([a-z0-9-\.]*)", re.UNICODE)
+    _re_uri = re.compile(r"^(?:(?:(?P<scheme>https?|ftp)\://)?(?P<domain>(?:\[?(?:\d{1,3}\.){3}\d{1,3}\]?)|(?:(?:[-a-zA-Z0-9]+\.)+[a-zA-Z]{2,4}))(?P<port>\:\d+)?)?(?P<path>/[-a-zA-Z0-9._?,'+&amp;%$#=~\\/|]*)?$", re.UNICODE)
 
     def __init__(self, name, annotate_links=True, **kwargs):
         super(LinkTag, self).__init__(name, inline=True)
@@ -213,6 +215,8 @@ class LinkTag(TagBase):
     def render_open(self, parser, node_index):
 
         self.domain = u''
+        self.is_link_broken = False
+        self.is_link_empty = False
         tag_data = parser.tag_data
         nest_level = tag_data[u'link_nest_level'] = tag_data.setdefault(u'link_nest_level', 0) + 1
 
@@ -225,29 +229,19 @@ class LinkTag(TagBase):
             url = self.get_contents_text(parser).strip()
             url = _unescape(url)
 
-        self.domain = u""
-
-        if u':' not in url:
-            url = u'http://' + url
-
-        scheme, uri = url.split(u':', 1)
-
-        if scheme not in [u'http', u'https']:
+        uri_match = self._re_uri.match(url)
+        if not uri_match:
+            self.is_link_broken = True
             return u''
 
-        try:
-            domain_match = self._re_domain.search(uri.lower())
-            if domain_match is None:
-                return u''
-            domain = domain_match.group(1)
-        except IndexError:
-            return u''
+        uri = uri_match.groupdict()
+        self.domain = uri[u'domain']
+        if self.domain:
+            self.domain = self.domain.lower()
+            if not uri[u'scheme']:
+                url = u'http://' + url
 
-        domain = domain.lower()
-        if domain.startswith(u'www.'):
-            domain = domain[4:]
-
-        def percent_encode(s):            
+        def percent_encode(s):
             safe_chars = self._safe_chars
             def replace(c):
                 if c not in safe_chars:
@@ -256,17 +250,16 @@ class LinkTag(TagBase):
                     return c
             return u"".join([replace(c) for c in s])
 
-        #self.url = percent_encode(url.encode(u'utf-8', u'replace'))
         self.url = percent_encode(url)
-        self.domain = domain
 
         if not self.url:
+            self.is_link_empty = True
             return u""
 
         if self.domain:
             return u'<a href="%s">' % PostMarkup.standard_replace_no_break(self.url)
         else:
-            return u""
+            return u'<a href="%s">' % PostMarkup.standard_replace_no_break(self.url)
 
 
     def render_close(self, parser, node_index):
@@ -276,14 +269,16 @@ class LinkTag(TagBase):
 
         if tag_data[u'link_nest_level'] > 0:
             return u''
-
-        if self.domain:
-            return u'</a>'+self.annotate_link(self.domain)
-        else:
+        
+        if self.is_link_broken or self.is_link_empty:
             return u''
 
-    def annotate_link(self, domain=None):
+        if self.domain:
+            return u'</a>' + self.annotate_link(self.domain)
+        else:
+            return u'</a>'
 
+    def annotate_link(self, domain=None):
         if domain and self.annotate_links:
             return annotate_link(domain)
         else:
@@ -825,7 +820,7 @@ class PostMarkup(object):
 
     TOKEN_TAG, TOKEN_PTAG, TOKEN_TEXT = range(3)
 
-    _re_tag_on_line = re.compile(r'\[.*?\].*?$', re.MULTILINE)
+    _re_tag_on_line = re.compile(r'\[.*?\]', re.MULTILINE)
     _re_end_eq = re.compile(r"\]|\=", re.UNICODE)
     _re_quote_end = re.compile(r'\"|\]', re.UNICODE)
     #_re_tag_token = re.compile(r'^\[(.*?)[\s|=](.*?)\]$', re.UNICODE)
@@ -850,7 +845,7 @@ class PostMarkup(object):
 
         post_find = post.find
         while True:
-            brace_pos = post_find(u'[', pos)
+            brace_pos = find_first(post, pos, re_tag_on_line)
             if brace_pos == -1:
                 if pos < len(post):
                     yield TOKEN_TEXT, post[pos:], pos, len(post)
@@ -994,7 +989,7 @@ class PostMarkup(object):
         while original_html != html:
             original_html = html
             html = cls._re_blank_tags.sub(u"", html)
-            html = cls._re_blank_with_spaces_tags.sub(u"<\\1> </\\1>", html)
+            html = cls._re_blank_with_spaces_tags.sub(u" ", html)
         html = _re_break_groups.sub(u"\n", html)
         return html
 
@@ -1037,7 +1032,7 @@ class PostMarkup(object):
 
         post_markup = post_markup.replace(u'\r\n', u'\n')
         if paragraphs:
-            post_markup = _re_break_groups.sub(u'\n\n', post_markup)      
+            post_markup = _re_break_groups.sub(u'\n', post_markup)
 
         parser = _Parser(self, tag_data=tag_data)
         parser.tag_data.setdefault(u"output", {})
@@ -1134,8 +1129,8 @@ class PostMarkup(object):
                     
                 if paragraphs:                     
                     if not tag_stack:
-                        while u'\n\n' in tag_token:
-                            text, tag_token = tag_token.split(u'\n\n', 1)
+                        while u'\n' in tag_token:
+                            text, tag_token = tag_token.split(u'\n', 1)
                             if text.strip():                                                                                    
                                 nodes.append(standard_replace(text))                            
                             nodes.append(u"</p><p>")
@@ -1362,7 +1357,7 @@ asdasdasdasdqweqwe
 [/list]""")
 
 
-    #tests = []
+    tests = []
     tests.append("[b][p]Hello, [p]World")
     tests.append("[p][p][p]")
 
@@ -1370,7 +1365,7 @@ asdasdasdasdqweqwe
 
     #tests=["""[b]b[i]i[/b][/i]"""]
 
-    tests = []
+    #tests = []
     tests.append("[code python]    import this[/code]")
 
     for test in tests:
