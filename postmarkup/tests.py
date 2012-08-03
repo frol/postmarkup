@@ -94,3 +94,12 @@ class TestPostmarkup(unittest.TestCase):
 
         for test, result in tests:
             self.assertEqual(markup(test), result)
+
+    def test_urls(self):
+        """Test handling of URLs"""        
+        markup = postmarkup.create()
+
+        tests= [ (u"http://example.com", "[url]http://example.com[/url]")                            
+                 ]
+        for test, result in tests:
+            self.assertEqual(markup.tagify_urls(test), result)

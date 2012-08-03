@@ -495,22 +495,24 @@ class SizeTag(TagBase):
 
 class ColorTag(TagBase):
 
-    valid_chars = frozenset(u"#0123456789abcdefghijklmnopqrstuvwxyz")
-    re_html_color = re.compile(r'[0-9a-f]+')    
+    re_html_color = re.compile(r'^([0-9a-f]+|[a-z]+)$')
+    re_rgb_html_color = re.compile(r'^rgba?\((\d+),(\d+),(\d+)(?:,\d+\.\d+)?\)$')
 
     def __init__(self, name, **kwargs):
         TagBase.__init__(self, name, inline=True)
 
     def render_open(self, parser, node_index):
-        valid_chars = self.valid_chars        
-        try:
-            color = self.params.split()[0].lower()
-            self.color = u"".join([c for c in color if c in valid_chars])
-            if not self.color.startswith(u'#') and len(self.color) in (3, 6):                
-                if self.re_html_color.match(self.color):
-                    self.color = u'#' + self.color                    
-        except IndexError:
-            self.color = None
+        color = self.params.strip()
+        print color
+        match = self.re_html_color.match(color)
+        if match:
+            self.color = color
+        else:
+            match = self.re_rgb_html_color.match(color)
+            if match:
+                self.color = '#%.2x%.2x%.2x' % tuple(map(int, match.groups()))
+            else:
+                self.color = None
 
         if not self.color:
             return u""
