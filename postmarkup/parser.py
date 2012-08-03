@@ -503,7 +503,6 @@ class ColorTag(TagBase):
 
     def render_open(self, parser, node_index):
         color = self.params.strip()
-        print color
         match = self.re_html_color.match(color)
         if match:
             self.color = color
