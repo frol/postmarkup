@@ -20,7 +20,7 @@ class TestPostmarkup(unittest.TestCase):
         tests = [(u"[b]Not bold[/b]", u"Not bold"),
                  (u"Just text", u"Just text"),
                  (u"[b][i][url][url=test]", u"")]
-        
+
         for test, result in tests:
             self.assertEqual(postmarkup.strip_bbcode(test), result)
         
@@ -37,7 +37,7 @@ class TestPostmarkup(unittest.TestCase):
 
 
     def test_simpletag(self):
-        "Test simple tags"
+        """Test simple tags"""
         markup = postmarkup.create()
 
         tests = [ (u'[b]Hello[/b]', u"<strong>Hello</strong>"),
@@ -48,7 +48,17 @@ class TestPostmarkup(unittest.TestCase):
 
         for test, result in tests:
             self.assertEqual(markup(test), result)
-
+            
+    def test_tabletag(self):
+        """Test Table Tags"""
+        markup = postmarkup.create()
+        
+        tests = [ (u"[table][tr][td]Row 1, Col 1[/td][td]Row 1, Col 2[/td][/tr][tr][td]Row 2, Col 1[/td][td]Row 2, Col 2[/td][/tr][/table]",
+                   u'<table><tr><td>Row 1, Col 1</td><td>Row 1, Col 2</td></tr><tr><td>Row 2, Col 1</td><td>Row 2, Col 2</td></tr></table>')
+                   ]
+        
+        for test, result in tests:
+            self.assertEqual(markup(test), result)
 
     def test_overlap(self):
         """Test overlapping tags produce correct output"""
@@ -103,3 +113,6 @@ class TestPostmarkup(unittest.TestCase):
                  ]
         for test, result in tests:
             self.assertEqual(markup.tagify_urls(test), result)
+
+if __name__ == '__main__':
+    unittest.main()

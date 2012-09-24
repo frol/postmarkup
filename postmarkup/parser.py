@@ -20,6 +20,9 @@ __all__ = ["annotate_link",
            "ColorTag",
            "CenterTag",
            "RightTag",
+           "TableTag",
+           "TableRowTag",
+           "TableDataTag",
            "ParagraphTag",
            "SectionTag",
            "DefaultTag",
@@ -284,6 +287,65 @@ class LinkTag(TagBase):
         else:
             return u""
 
+class TableTag(TagBase):
+
+    def __init__(self, name, **kwargs):
+        TagBase.__init__(self, name, strip_first_newline=True)
+
+    def open(self, parser, *args):
+        TagBase.open(self, parser, *args)
+
+    def close(self, parser, *args):
+        TagBase.close(self, parser, *args)
+
+    def render_open(self, parser, node_index):
+        if self.params:
+            return u'<table>%s'%(PostMarkup.standard_replace(self.params))
+        else:
+            return u'<table>'
+
+    def render_close(self, parser, node_index):
+        return u"</table>"
+
+class TableRowTag(TagBase):
+
+    def __init__(self, name, **kwargs):
+        TagBase.__init__(self, name, strip_first_newline=True)
+
+    def open(self, parser, *args):
+        TagBase.open(self, parser, *args)
+
+    def close(self, parser, *args):
+        TagBase.close(self, parser, *args)
+
+    def render_open(self, parser, node_index):
+        if self.params:
+            return u'<tr>%s'%(PostMarkup.standard_replace(self.params))
+        else:
+            return u'<tr>'
+
+    def render_close(self, parser, node_index):
+        return u"</tr>"
+
+class TableDataTag(TagBase):
+
+    def __init__(self, name, **kwargs):
+        TagBase.__init__(self, name, strip_first_newline=True)
+
+    def open(self, parser, *args):
+        TagBase.open(self, parser, *args)
+
+    def close(self, parser, *args):
+        TagBase.close(self, parser, *args)
+
+    def render_open(self, parser, node_index):
+        if self.params:
+            return u'<td>%s'%(PostMarkup.standard_replace(self.params))
+        else:
+            return u'<td>'
+
+    def render_close(self, parser, node_index):
+        return u"</td>"
 
 class QuoteTag(TagBase):
 
@@ -672,7 +734,12 @@ def create(include=None,
     add_tag(ColorTag, u"color")
     add_tag(CenterTag, u"center")
     add_tag(RightTag, u"right")
-
+    
+    # Table information
+    add_tag(TableTag, u"table")
+    add_tag(TableRowTag, u"tr")
+    add_tag(TableDataTag, u"td")
+    
     if use_pygments:
         assert pygments_available, "Install Pygments (http://pygments.org/) or call create with use_pygments=False"
         add_tag(PygmentsCodeTag, u'code', **kwargs)
